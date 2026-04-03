@@ -37,4 +37,4 @@ async def ingest():
 
 @app.get("/demo")
 def demo():
-    return FileResponse("static/index.html")
+    return FileResponse(os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "index.html"))
