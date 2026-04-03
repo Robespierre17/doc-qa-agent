@@ -2,6 +2,7 @@ import os
 from fastapi import FastAPI
 from pydantic import BaseModel
 from dotenv import load_dotenv
+from ingest import ingest_all_documents
 
 load_dotenv()
 
@@ -20,3 +21,8 @@ def root():
 def ask(q: Question):
     response = answer_question(q.question)
     return {"question": q.question, "answer": response}
+
+@app.post("/setup")
+def setup():
+    ingest_all_documents()
+    return {"status": "Database initialized and documents ingested"}
