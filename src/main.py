@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 from ingest import ingest_all_documents
 
+
 load_dotenv()
 
 from answer import answer_question
@@ -26,3 +27,8 @@ def ask(q: Question):
 def setup():
     ingest_all_documents()
     return {"status": "Database initialized and documents ingested"}
+
+@app.post("/ingest")
+async def ingest():
+    result = ingest_all_documents()
+    return {"status": "ok", "result": result}
