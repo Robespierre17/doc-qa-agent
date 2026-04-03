@@ -9,6 +9,7 @@ load_dotenv()
 def ingest_all_documents():
     conn = psycopg2.connect(os.getenv("DATABASE_URL"))
     cursor = conn.cursor()
+    cursor.execute("CREATE EXTENSION IF NOT EXISTS vector")
 
     # Create table if it doesn't exist
     cursor.execute("""
