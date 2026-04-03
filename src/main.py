@@ -1,0 +1,22 @@
+import os
+from fastapi import FastAPI
+from pydantic import BaseModel
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from answer import answer_question
+
+app = FastAPI(title="Doc QA Agent")
+
+class Question(BaseModel):
+    question: str
+
+@app.get("/")
+def root():
+    return {"status": "running", "service": "Doc QA Agent"}
+
+@app.post("/ask")
+def ask(q: Question):
+    response = answer_question(q.question)
+    return {"question": q.question, "answer": response}
