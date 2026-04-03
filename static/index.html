@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HR Docs Q&A Agent — Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #12151c;
+    --surface-hover: #1a1e28;
+    --border: #1e2230;
+    --text: #e2e4ea;
+    --text-dim: #7a7f8e;
+    --accent: #4ade80;
+    --accent-dim: rgba(74, 222, 128, 0.08);
+    --accent-glow: rgba(74, 222, 128, 0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .grain {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-size: 256px;
+    z-index: 9999;
+  }
+
+  .glow-orb {
+    position: fixed;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(74,222,128,0.04) 0%, transparent 70%);
+    top: -200px;
+    right: -200px;
+    pointer-events: none;
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 60px 24px 80px;
+    position: relative;
+  }
+
+  header {
+    margin-bottom: 48px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: var(--accent-dim);
+    border: 1px solid rgba(74,222,128,0.15);
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 20px;
+  }
+
+  .badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s ease infinite;
+  }
+
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 42px;
+    font-weight: 400;
+    line-height: 1.15;
+    margin-bottom: 14px;
+    letter-spacing: -0.01em;
+  }
+
+  .subtitle {
+    font-size: 16px;
+    color: var(--text-dim);
+    line-height: 1.6;
+    max-width: 540px;
+  }
+
+  .input-area {
+    margin-bottom: 40px;
+    animation: fadeUp 0.6s ease 0.1s both;
+  }
+
+  .input-wrapper {
+    display: flex;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 8px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+
+  .input-wrapper:focus-within {
+    border-color: rgba(74,222,128,0.3);
+    box-shadow: 0 0 0 4px var(--accent-dim);
+  }
+
+  .input-wrapper input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    padding: 10px 14px;
+  }
+
+  .input-wrapper input::placeholder {
+    color: var(--text-dim);
+  }
+
+  .ask-btn {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .ask-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .ask-btn:active { transform: translateY(0); }
+  .ask-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+  }
+
+  .demo-questions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 48px;
+    animation: fadeUp 0.6s ease 0.2s both;
+  }
+
+  .demo-q {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .demo-q:hover {
+    background: var(--surface-hover);
+    border-color: rgba(74,222,128,0.2);
+    transform: translateX(4px);
+  }
+
+  .demo-q .icon {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-dim);
+    border-radius: 8px;
+    font-size: 13px;
+    margin-top: 1px;
+  }
+
+  .demo-q .q-content { flex: 1; }
+
+  .demo-q .q-text { margin-bottom: 4px; }
+
+  .demo-q .q-tag {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 500;
+    opacity: 0.7;
+  }
+
+  .answer-area {
+    animation: fadeUp 0.3s ease both;
+  }
+
+  .answer-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .answer-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+  }
+
+  .answer-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 14px;
+  }
+
+  .answer-text {
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+
+  .answer-question {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    font-style: italic;
+  }
+
+  .loading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 24px 0;
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+
+  .loading-dots {
+    display: flex;
+    gap: 4px;
+  }
+
+  .loading-dots span {
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: bounce 1.2s ease infinite;
+  }
+
+  .loading-dots span:nth-child(2) { animation-delay: 0.15s; }
+  .loading-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+  .tech-footer {
+    margin-top: 60px;
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+    animation: fadeUp 0.6s ease 0.3s both;
+  }
+
+  .tech-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .tech-tag {
+    padding: 6px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+
+  .error-msg {
+    color: #f87171;
+    font-size: 14px;
+    padding: 16px 0;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  @keyframes bounce {
+    0%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-8px); }
+  }
+
+  @media (max-width: 520px) {
+    .container { padding: 40px 16px 60px; }
+    h1 { font-size: 30px; }
+    .input-wrapper { flex-direction: column; }
+    .ask-btn { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="grain"></div>
+<div class="glow-orb"></div>
+
+<div class="container">
+  <header>
+    <div class="badge">Live on Railway</div>
+    <h1>HR Docs Q&A Agent</h1>
+    <p class="subtitle">An AI agent that answers questions about HR policy documents using RAG, semantic search, and tool use. Ask anything about benefits, compensation, vacation, sick leave, or remote work.</p>
+  </header>
+
+  <div class="input-area">
+    <div class="input-wrapper">
+      <input type="text" id="questionInput" placeholder="Ask a question about company policies..." />
+      <button class="ask-btn" id="askBtn" onclick="askQuestion()">Ask Agent</button>
+    </div>
+  </div>
+
+  <div class="demo-questions">
+    <div class="section-label">Try these questions</div>
+
+    <div class="demo-q" onclick="fillAndAsk(this)">
+      <div class="icon">🔍</div>
+      <div class="q-content">
+        <div class="q-text">How many sick days do employees get, and what happens to unused ones?</div>
+        <div class="q-tag">Single-document retrieval</div>
+      </div>
+    </div>
+
+    <div class="demo-q" onclick="fillAndAsk(this)">
+      <div class="icon">🧩</div>
+      <div class="q-content">
+        <div class="q-text">Compare the parental leave policy for primary vs secondary caregivers, and does adoption qualify?</div>
+        <div class="q-tag">Multi-detail extraction</div>
+      </div>
+    </div>
+
+    <div class="demo-q" onclick="fillAndAsk(this)">
+      <div class="icon">📊</div>
+      <div class="q-content">
+        <div class="q-text">If I make $100,000 and get an "Exceeds Expectations" rating, what's my total compensation including bonus and max merit increase?</div>
+        <div class="q-tag">Cross-document reasoning + calculation</div>
+      </div>
+    </div>
+
+    <div class="demo-q" onclick="fillAndAsk(this)">
+      <div class="icon">🔗</div>
+      <div class="q-content">
+        <div class="q-text">What are all the financial benefits available to a new employee in their first year?</div>
+        <div class="q-tag">Multi-document synthesis</div>
+      </div>
+    </div>
+
+    <div class="demo-q" onclick="fillAndAsk(this)">
+      <div class="icon">⚖️</div>
+      <div class="q-content">
+        <div class="q-text">If I want to work remotely from another country for 6 weeks, what approvals do I need and are there any limits?</div>
+        <div class="q-tag">Policy reasoning with constraints</div>
+      </div>
+    </div>
+
+    <div class="demo-q" onclick="fillAndAsk(this)">
+      <div class="icon">🧮</div>
+      <div class="q-content">
+        <div class="q-text">What's the monthly cost difference between Basic and Premium health plans, and what extra coverage does Premium include?</div>
+        <div class="q-tag">Comparison + calculation</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="answerArea"></div>
+
+  <div class="tech-footer">
+    <div class="section-label">Built with</div>
+    <div class="tech-tags">
+      <span class="tech-tag">Python</span>
+      <span class="tech-tag">FastAPI</span>
+      <span class="tech-tag">PostgreSQL + pgvector</span>
+      <span class="tech-tag">OpenAI API</span>
+      <span class="tech-tag">RAG Pipeline</span>
+      <span class="tech-tag">AI Agent + Tools</span>
+      <span class="tech-tag">Railway</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_URL = 'https://doc-qa-agent-production.up.railway.app';
+
+  function fillAndAsk(el) {
+    const text = el.querySelector('.q-text').textContent;
+    document.getElementById('questionInput').value = text;
+    askQuestion();
+  }
+
+  async function askQuestion() {
+    const input = document.getElementById('questionInput');
+    const btn = document.getElementById('askBtn');
+    const area = document.getElementById('answerArea');
+    const question = input.value.trim();
+
+    if (!question) return;
+
+    btn.disabled = true;
+    btn.textContent = 'Thinking...';
+    area.innerHTML = `
+      <div class="answer-box">
+        <div class="loading">
+          <div class="loading-dots"><span></span><span></span><span></span></div>
+          Searching documents and reasoning...
+        </div>
+      </div>
+    `;
+
+    try {
+      const res = await fetch(`${API_URL}/ask`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question })
+      });
+
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+
+      const data = await res.json();
+
+      area.innerHTML = `
+        <div class="answer-area">
+          <div class="answer-box">
+            <div class="answer-label">Agent Response</div>
+            <div class="answer-question">"${data.question}"</div>
+            <div class="answer-text">${data.answer}</div>
+          </div>
+        </div>
+      `;
+    } catch (err) {
+      area.innerHTML = `<div class="error-msg">Something went wrong: ${err.message}. Make sure the API is running.</div>`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Ask Agent';
+    }
+  }
+
+  document.getElementById('questionInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') askQuestion();
+  });
+</script>
+
+</body>
+</html>

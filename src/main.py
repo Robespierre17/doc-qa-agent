@@ -3,6 +3,9 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from ingest import ingest_all_documents
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
 
 load_dotenv()
 
@@ -31,3 +34,7 @@ def setup():
 async def ingest():
     result = ingest_all_documents()
     return {"status": "ok", "result": result}
+
+@app.get("/demo")
+def demo():
+    return FileResponse("static/index.html")
