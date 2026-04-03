@@ -39,4 +39,3 @@ POST /ask
 - Working with vector embeddings and pgvector for semantic search
 - Designing an AI agent with tool use capabilities
 - Deploying a Python API with a PostgreSQL database on Railway
-- Git workflows with branches, pull requests, and CI/CD
