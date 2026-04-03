@@ -26,3 +26,8 @@ def ask(q: Question):
 def setup():
     ingest_all_documents()
     return {"status": "Database initialized and documents ingested"}
+
+@app.post("/ingest")
+async def ingest():
+    result = ingest_all_documents()
+    return {"status": "ok", "result": result}
